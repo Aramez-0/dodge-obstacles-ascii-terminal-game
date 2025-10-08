@@ -1,0 +1,1 @@
+basic manoever around obstacles ascii program run in the terminal but with powerups and settings and such. would it be difficult to make a side scroller in the terminal. proably yes. anyways.

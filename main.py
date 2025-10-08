@@ -1,105 +1,204 @@
 import random
 import os
+import re
 
-# obstacles are being a dick right now
+# i could add a save file to this. is there a point though
 
-board_width = 25
-board_length = 10
-obstacle_size = [8, 9]
-obstacle_gaps = 2
-obstacle_frequency = [3, 5]
-obstacles = []
-prints_without_obstacles = 0
-player_lives = 1
+class game_settings:
+	board_width = 25
+	board_length = 10
+	obstacle_size = [8, 9]
+	obstacle_gaps = 2
+	obstacle_frequency = [3, 5]
+	obstacles = []
+	prints_without_obstacles = 0
+	player_lives = 1
+	points = 0
+
+	board_width_points = 10
+	board_length_points = 10
+	obstacle_size_points = 10
+	obstacle_gaps_points = 10
+	obstacle_frequency_points = 10
+	prints_without_obstacles_points = 10
+	player_lives_points = 10
+
+	def upgrade(self, u: str):
+		match u:
+			case "Board Width":
+				if self.points >= self.board_width_points:
+					self.board_width += 1
+					self.points -= self.board_width_points
+					self.board_width_points += 10
+			case "Board Length":
+				if self.points >= self.board_length_points:
+					self.board_length += 1
+					self.points -= self.board_length_points
+					self.board_length_points += 10
+			case "Obstacle Size":
+				if self.points >= self.obstacle_size_points:
+					if self.obstacle_size[0] > self.board_width / 2: self.obstacle_size = [size - 1 for size in self.obstacle_size]
+					self.points -= self.obstacle_size_points
+					self.obstacle_size_points += 10
+			case "Obstacle Gaps":
+				if self.points >= self.obstacle_gaps_points:
+					self.obstacle_gaps += 1
+					self.points -= self.obstacle_gaps_points
+					self.obstacle_gaps_points += 10
+			case "Obstacle Frequency":
+				if self.points >= self.obstacle_frequency_points:
+					if self.obstacle_frequency[0] > 0: self.obstacle_frequency = [freq - 1 for freq in self.obstacle_frequency]
+					self.points -= self.obstacle_frequency_points
+					self.obstacle_frequency_points += 10
+			case "Player Lives":
+				if self.points >= self.player_lives_points:
+					self.player_lives += 1
+					self.points -= self.player_lives_points
+					self.player_lives_points += 10
+
+settings = game_settings()
 
 class player:
+	def __init__(self):
+		self.x = 0
+		self.y = 0
+		self.lives = settings.player_lives
 
-	x = 0
-	y = 0
-	lives = player_lives
-	
 	def lose_lives(self, amount = 1) -> str:
-		self.lives -= 1
+		self.lives -= amount
 		if self.lives <= 0:
 			return "dead\n"
 		else:
 			return "hit\n"
 
+def to_snake_case(text):
+    text = re.sub(r'[^a-zA-Z0-9_]', ' ', text)
+    text = re.sub(r'((?<=[a-z0-9])(?=[A-Z]))', r'_\1', text)
+    text = re.sub(r'[\s_]+', '_', text)
+    return text.lower().strip('_')
+
 def generate_obstacle():
+	global settings
 	obstacle = {
 		"pos": 0,
-		"size": random.choice(obstacle_size),
+		"size": random.choice(settings.obstacle_size),
 		"gaps": []
 	}
-	for i in range(obstacle_gaps):
+	for i in range(settings.obstacle_gaps):
 		gap_num = random.randint(0, obstacle["size"])
 		while gap_num in obstacle["gaps"]:
 			gap_num = random.randint(0, obstacle["size"])
 		obstacle["gaps"].append(gap_num)
-	obstacles.append(obstacle)
+	settings.obstacles.append(obstacle)
 
 def print_board(current_player):
 	os.system('cls' if os.name == 'nt' else 'clear')
-	global prints_without_obstacles
-	global obstacles
+	global settings
 	message = ""
-	if prints_without_obstacles > obstacle_frequency[0] and prints_without_obstacles < obstacle_frequency[1]:
+	if settings.prints_without_obstacles > settings.obstacle_frequency[0] and settings.prints_without_obstacles < settings.obstacle_frequency[1]:
 		if random.randint(0, 2) == 0:
 			generate_obstacle()
-			prints_without_obstacles = 0
-	elif prints_without_obstacles == obstacle_frequency[1]:
+			settings.prints_without_obstacles = 0
+	elif settings.prints_without_obstacles == settings.obstacle_frequency[1]:
 		generate_obstacle()
-		prints_without_obstacles = 0
+		settings.prints_without_obstacles = 0
 	else:
-		prints_without_obstacles += 1
+		settings.prints_without_obstacles += 1
 	board = ""
-	for i in range(board_width):
+	for i in range(settings.board_width):
 		board += "#"
 	board += "\n"
-	for k in range(board_length):
-		for i in range(board_width):
+	for k in range(settings.board_length):
+		for i in range(settings.board_width):
 			ob_placed = False
-			for j in obstacles:
+			for j in settings.obstacles:
 				if j["pos"] == i and not k in j["gaps"]:
 					board += "#"
 					ob_placed = True
-			if not ob_placed:
-				board += "/"
 			if k == current_player.x and i == current_player.y:
 				if ob_placed:
 					message += current_player.lose_lives()
+				else:
+					settings.points += 1
 				board += "X"
+			elif not ob_placed:
+				board += "/"
 		board += "\n"
-	for i in range(board_width):
+	for i in range(settings.board_width):
 		board += "#"
 	print(board)
 	print(message)
-	for i in obstacles:
+	for i in settings.obstacles:
 		i["pos"] += 1
-		if i["pos"] > board_width:
-			obstacles.remove(i)
+		if i["pos"] > settings.board_width:
+			settings.obstacles.remove(i)
 	player_input = input("Input: ")
-	if player_input == "s" and current_player.x < board_length:
-		current_player.x += 1
-	elif player_input == "w" and current_player.x >= 0:
+	if player_input == "w" and current_player.x > 0:
 		current_player.x -= 1
-	elif player_input == "a" and current_player.y < board_width:
+	elif player_input == "s" and current_player.x < settings.board_length - 1:
+		current_player.x += 1
+	elif player_input == "a" and current_player.y > 0:
 		current_player.y -= 1
-	elif player_input == "d" and current_player.y >= 0:
+	elif player_input == "d" and current_player.y < settings.board_width - 1:
 		current_player.y += 1
-	elif player_input == "exit" or player_input == "quit" or player_input == "q":
-		exit()
+	player_input_handling(player_input)
 	if current_player.lives <= 0:
 		start_game()
 	print_board(current_player)
 
 def clear_board():
-	prints_without_obstacles = 0
-	obstacles.clear()
+	global settings
+	settings.prints_without_obstacles = 0
+	settings.obstacles.clear()
+
+def player_input_handling(p_input: str):
+	if p_input == "menu":
+		menu()
+	elif p_input == "start":
+		start_game()
+	elif p_input == "help":
+		help()
+	elif p_input == "exit" or p_input == "quit" or p_input == "q":
+		exit()
+
+def menu():
+	os.system('cls' if os.name == 'nt' else 'clear')
+	global settings
+	upgrades = [
+		"Player Lives",
+		"Board Width",
+		"Board Length",
+		"Obstacle Size",
+		"Obstacle Gaps",
+		"Obstacle Frequency",
+	]
+	print("Points: " + str(settings.points))
+	for i in range(len(upgrades)):
+		print(f"{i + 1}.{upgrades[i]}: " + str(getattr(settings, to_snake_case(upgrades[i]) + "_points")) + "\n")
+	player_input = input("Input: ")
+	for i in range(len(upgrades)):
+		if player_input == upgrades[i] or player_input == str(i + 1):
+			settings.upgrade(upgrades[i])
+		if player_input_handling(player_input) == True:
+			return
+	menu()
 
 def start_game():
 	clear_board()
 	current_player = player()
 	print_board(current_player)
 
-start_game()
+def help():
+	os.system('cls' if os.name == 'nt' else 'clear')
+	print("#Type start to play the game")
+	print("#Type w, a, s or d while playing the game to control the direction the X character moves on the next turn")
+	print("#Type menu to access the game menu")
+	print("#Type exit, quit or q to exit the program")
+	print("#Type help to re-enter this screen")
+	print("#Press enter key after typing a command to execute the command")
+	player_input = input("Input: ")
+	if player_input_handling(player_input):
+		return
+	help()
+
+help()
