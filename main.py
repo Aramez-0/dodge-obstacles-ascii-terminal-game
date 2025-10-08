@@ -1,27 +1,44 @@
 import random
 import os
 import re
+from pathlib import Path
+import json
 
 # i could add a save file to this. is there a point though
 
 class game_settings:
-	board_width = 25
-	board_length = 10
-	obstacle_size = [8, 9]
-	obstacle_gaps = 2
-	obstacle_frequency = [3, 5]
-	obstacles = []
-	prints_without_obstacles = 0
-	player_lives = 1
-	points = 0
 
-	board_width_points = 10
-	board_length_points = 10
-	obstacle_size_points = 10
-	obstacle_gaps_points = 10
-	obstacle_frequency_points = 10
-	prints_without_obstacles_points = 10
-	player_lives_points = 10
+	def __init__(self):
+		self.board_width = 25
+		self.board_length = 10
+		self.obstacle_size = [8, 9]
+		self.obstacle_gaps = 2
+		self.obstacle_frequency = [3, 5]
+		self.obstacles = []
+		self.prints_without_obstacles = 0
+		self.player_lives = 1
+		self.points = 0
+
+		self.board_width_points = 10
+		self.board_length_points = 10
+		self.obstacle_size_points = 10
+		self.obstacle_gaps_points = 10
+		self.obstacle_frequency_points = 10
+		self.player_lives_points = 10
+		p = Path("save_data.json")
+		while True:
+			try:
+				with p.open() as f:
+					try:
+						data = json.load(f)
+					except json.JSONDecodeError:
+						data = {}
+					for key, value in data.items():
+							setattr(self, key, value)
+				break
+			except FileNotFoundError:
+				with p.open("w") as f:
+					json.dump({}, f)
 
 	def upgrade(self, u: str):
 		match u:
@@ -70,6 +87,26 @@ class player:
 			return "dead\n"
 		else:
 			return "hit\n"
+
+def save_game():
+	p = Path("save_data.json")
+	with p.open("w") as f:
+		data = {
+			"board_width": settings.board_width,
+			"board_length": settings.board_length,
+			"obstacle_size": [settings.obstacle_size[0], settings.obstacle_size[1]],
+			"obstacle_gaps": settings.obstacle_gaps,
+			"obstacle_frequency": [settings.obstacle_frequency[0], settings.obstacle_frequency[1]],
+			"player_lives": settings.player_lives,
+			"points": settings.points,
+			"board_width_points": settings.board_width_points,
+			"board_length_points": settings.board_length_points,
+			"obstacle_size_points": settings.obstacle_size_points,
+			"obstacle_gaps_points": settings.obstacle_gaps_points,
+			"obstacle_frequency_points": settings.obstacle_frequency_points,
+			"player_lives_points": settings.player_lives_points,
+		}
+		json.dump(data, f)
 
 def to_snake_case(text):
     text = re.sub(r'[^a-zA-Z0-9_]', ' ', text)
@@ -160,6 +197,8 @@ def player_input_handling(p_input: str):
 		help()
 	elif p_input == "exit" or p_input == "quit" or p_input == "q":
 		exit()
+	elif p_input == "save":
+		save_game()
 
 def menu():
 	os.system('cls' if os.name == 'nt' else 'clear')
@@ -179,8 +218,7 @@ def menu():
 	for i in range(len(upgrades)):
 		if player_input == upgrades[i] or player_input == str(i + 1):
 			settings.upgrade(upgrades[i])
-		if player_input_handling(player_input) == True:
-			return
+	player_input_handling(player_input)
 	menu()
 
 def start_game():
@@ -190,15 +228,15 @@ def start_game():
 
 def help():
 	os.system('cls' if os.name == 'nt' else 'clear')
-	print("#Type start to play the game")
-	print("#Type w, a, s or d while playing the game to control the direction the X character moves on the next turn")
-	print("#Type menu to access the game menu")
-	print("#Type exit, quit or q to exit the program")
-	print("#Type help to re-enter this screen")
-	print("#Press enter key after typing a command to execute the command")
+	print("# Type start to play the game")
+	print("# Type w, a, s or d while playing the game to control the direction the X character moves on the next turn")
+	print("# Type menu to access the game menu")
+	print("# Type exit, quit or q to exit the program")
+	print("# Type help to re-enter this screen")
+	print("# Type save to save game data into save_data.json file. this is not done automatically")
+	print("# Press enter key after typing a command to execute the command")
 	player_input = input("Input: ")
-	if player_input_handling(player_input):
-		return
+	player_input_handling(player_input)
 	help()
 
 help()
