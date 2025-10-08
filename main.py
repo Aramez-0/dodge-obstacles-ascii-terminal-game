@@ -18,6 +18,7 @@ class game_settings:
 		self.prints_without_obstacles = 0
 		self.player_lives = 1
 		self.points = 0
+		self.automatic_save_data = False
 
 		self.board_width_points = 10
 		self.board_length_points = 10
@@ -105,6 +106,7 @@ def save_game():
 			"obstacle_gaps_points": settings.obstacle_gaps_points,
 			"obstacle_frequency_points": settings.obstacle_frequency_points,
 			"player_lives_points": settings.player_lives_points,
+			"automatic_save_data": settings.automatic_save_data,
 		}
 		json.dump(data, f)
 
@@ -189,6 +191,7 @@ def clear_board():
 	settings.obstacles.clear()
 
 def player_input_handling(p_input: str):
+	global settings
 	if p_input == "menu":
 		menu()
 	elif p_input == "start":
@@ -196,9 +199,13 @@ def player_input_handling(p_input: str):
 	elif p_input == "help":
 		help()
 	elif p_input == "exit" or p_input == "quit" or p_input == "q":
+		if settings.automatic_save_data:
+			save_game()
 		exit()
 	elif p_input == "save":
 		save_game()
+	elif p_input == "a_save":
+		settings.automatic_save_data = not settings.automatic_save_data
 
 def menu():
 	os.system('cls' if os.name == 'nt' else 'clear')
@@ -233,7 +240,11 @@ def help():
 	print("# Type menu to access the game menu")
 	print("# Type exit, quit or q to exit the program")
 	print("# Type help to re-enter this screen")
-	print("# Type save to save game data into save_data.json file. this is not done automatically")
+	print("# Type save to save game data into save_data.json file")
+	if settings.automatic_save_data:
+		print(f"# Automatic data saving before program exit via exit command is turned on, type a_save to toggle it")
+	else:
+		print("# Automatic data saving before program exit via exit command is turned off, type a_save to toggle it")
 	print("# Press enter key after typing a command to execute the command")
 	player_input = input("Input: ")
 	player_input_handling(player_input)
