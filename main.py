@@ -4,8 +4,6 @@ import re
 from pathlib import Path
 import json
 
-# i could add a save file to this. is there a point though
-
 class game_settings:
 
 	def __init__(self):
@@ -19,6 +17,10 @@ class game_settings:
 		self.player_lives = 1
 		self.points = 0
 		self.automatic_save_data = False
+		self.up_key = "w"
+		self.down_key = "s"
+		self.right_key = "d"
+		self.left_key = "a"
 
 		self.board_width_points = 10
 		self.board_length_points = 10
@@ -172,13 +174,13 @@ def print_board(current_player):
 		if i["pos"] > settings.board_width:
 			settings.obstacles.remove(i)
 	player_input = input("Input: ")
-	if player_input == "w" and current_player.x > 0:
+	if player_input == settings.up_key and current_player.x > 0:
 		current_player.x -= 1
-	elif player_input == "s" and current_player.x < settings.board_length - 1:
+	elif player_input == settings.down_key and current_player.x < settings.board_length - 1:
 		current_player.x += 1
-	elif player_input == "a" and current_player.y > 0:
+	elif player_input == settings.left_key and current_player.y > 0:
 		current_player.y -= 1
-	elif player_input == "d" and current_player.y < settings.board_width - 1:
+	elif player_input == settings.right_key and current_player.y < settings.board_width - 1:
 		current_player.y += 1
 	player_input_handling(player_input)
 	if current_player.lives <= 0:
@@ -206,6 +208,10 @@ def player_input_handling(p_input: str):
 		save_game()
 	elif p_input == "a_save":
 		settings.automatic_save_data = not settings.automatic_save_data
+	for i in ["up", "down", "left", "right"]:
+		if p_input == i + "_key":
+			new_direction = input("New direction key: ")
+			setattr(settings, i + "_key", new_direction)
 
 def menu():
 	os.system('cls' if os.name == 'nt' else 'clear')
@@ -245,6 +251,7 @@ def help():
 		print(f"# Automatic data saving before program exit via exit command is turned on, type a_save to toggle it")
 	else:
 		print("# Automatic data saving before program exit via exit command is turned off, type a_save to toggle it")
+	print("# Type direction (up, down, left or right) plus _key e.g. up_key to show an input. Type desired key to that input to change direction key")
 	print("# Press enter key after typing a command to execute the command")
 	player_input = input("Input: ")
 	player_input_handling(player_input)
